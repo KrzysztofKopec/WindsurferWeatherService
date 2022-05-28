@@ -67,4 +67,12 @@ public class LocationService {
         return new LocationResponse(locationDto.getData()[days].getDatetime(),locationDto.getCity_name(),
                 locationDto.getData()[days].getTemp(),locationDto.getData()[days].getWind_spd());
     }
+
+    public LocationCoordinates addCoordinate(Double lat, Double lon) {
+        return locationCoordinatesRepo.save(new LocationCoordinates(lat, lon));
+    }
+
+    public List<LocationCoordinates> allCoordinates() {
+        return locationCoordinatesRepo.findAll();
+    }
 }
