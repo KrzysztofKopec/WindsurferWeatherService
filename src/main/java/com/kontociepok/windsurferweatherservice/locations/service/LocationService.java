@@ -1,5 +1,6 @@
 package com.kontociepok.windsurferweatherservice.locations.service;
 
+import com.kontociepok.windsurferweatherservice.locations.controller.LocationCoordinatesResponse;
 import com.kontociepok.windsurferweatherservice.locations.controller.LocationDetails;
 import com.kontociepok.windsurferweatherservice.locations.model.LocationCoordinates;
 import com.kontociepok.windsurferweatherservice.locations.controller.LocationDto;
@@ -36,22 +37,22 @@ public class LocationService {
 
     public List<LocationResponse> allBestPlace(String date) {
         if(checkDate(date) < 0 || checkDate(date) > 15) return null;
-        return listBestPlace(checkDate(date))
+        return checkBestPlace(checkDate(date))
                 .stream()
                 .sorted(Comparator.comparing(LocationResponse::getTotalScore).reversed())
                 .collect(Collectors.toList());
     }
     
-    public List<LocationResponse> listBestPlace(int days){
+    public List<LocationResponse> checkBestPlace(int days){
         RestTemplate restTemplate = new RestTemplate();
         List<LocationCoordinates> locationCoordinates = locationCoordinatesRepo.findAll();
         List<LocationResponse> locationsResponse = new ArrayList<>();
         LocationDetails locationDetails;
-        String coorginates;
+        String coordinates;
         for(LocationCoordinates x: locationCoordinates){
-            coorginates = "lat=" +x.getLat()+"&lon="+x.getLon();
+            coordinates = "lat=" +x.getLat()+"&lon="+x.getLon();
             LocationDto location = restTemplate.getForObject(
-                    "https://api.weatherbit.io/v2.0/forecast/daily?"+coorginates+"&key=160bf06dc0924e2e9861636c78213988",
+                    "https://api.weatherbit.io/v2.0/forecast/daily?"+coordinates+"&key=160bf06dc0924e2e9861636c78213988",
                     LocationDto.class
             );
             locationDetails = location.getData()[days];
@@ -68,11 +69,16 @@ public class LocationService {
                 locationDto.getData()[days].getTemp(),locationDto.getData()[days].getWind_spd());
     }
 
-    public LocationCoordinates addCoordinate(Double lat, Double lon) {
-        return locationCoordinatesRepo.save(new LocationCoordinates(lat, lon));
+    private LocationCoordinatesResponse convertToLocationCoordinatesResponse(LocationCoordinates locationCoordinates){
+        return new LocationCoordinatesResponse(locationCoordinates.getId(),locationCoordinates.getLat(),locationCoordinates.getLon());
     }
 
-    public List<LocationCoordinates> allCoordinates() {
-        return locationCoordinatesRepo.findAll();
+    public LocationCoordinatesResponse addCoordinate(Double lat, Double lon) {
+        var coordinates = new LocationCoordinates(lat, lon);
+        return convertToLocationCoordinatesResponse(locationCoordinatesRepo.save(coordinates));
+    }
+
+    public List<LocationCoordinatesResponse> allCoordinates() {
+        return locationCoordinatesRepo.findAll().stream().map(this::convertToLocationCoordinatesResponse).collect(Collectors.toList());
     }
 }

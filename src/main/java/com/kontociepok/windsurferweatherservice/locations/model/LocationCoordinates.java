@@ -21,6 +21,10 @@ public class LocationCoordinates {
     public LocationCoordinates() {
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public double getLat() {
         return lat;
     }

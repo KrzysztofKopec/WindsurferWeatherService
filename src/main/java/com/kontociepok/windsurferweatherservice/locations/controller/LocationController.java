@@ -26,11 +26,11 @@ public class LocationController {
     }
 
     @PostMapping("/coordinates")
-    LocationCoordinates addCoordinate(@RequestParam Double lat, @RequestParam Double lon){
+    LocationCoordinatesResponse addCoordinate(@RequestParam Double lat, @RequestParam Double lon){
         return locationService.addCoordinate(lat, lon);
     }
     @GetMapping("/coordinates")
-    List<LocationCoordinates> allCoordinates(){
+    List<LocationCoordinatesResponse> allCoordinates(){
         return locationService.allCoordinates();
     }
 
