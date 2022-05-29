@@ -81,4 +81,10 @@ public class LocationService {
     public List<LocationCoordinatesResponse> allCoordinates() {
         return locationCoordinatesRepo.findAll().stream().map(this::convertToLocationCoordinatesResponse).collect(Collectors.toList());
     }
+
+    public LocationCoordinatesResponse deleteCoordinates(long coordinatesId) {
+        LocationCoordinates coordinates = locationCoordinatesRepo.getById(coordinatesId);
+        locationCoordinatesRepo.deleteById(coordinatesId);
+        return convertToLocationCoordinatesResponse(coordinates);
+    }
 }
