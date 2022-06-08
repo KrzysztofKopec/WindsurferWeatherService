@@ -1,5 +1,7 @@
 package com.kontociepok.windsurferweatherservice.locations.controller;
 
+import java.util.Objects;
+
 public class LocationCoordinatesResponse {
 
     private final Long id;
@@ -22,5 +24,19 @@ public class LocationCoordinatesResponse {
 
     public Double getLon() {
         return lon;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LocationCoordinatesResponse that = (LocationCoordinatesResponse) o;
+        return Objects.equals(lat, that.lat) &&
+                Objects.equals(lon, that.lon);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lat, lon);
     }
 }

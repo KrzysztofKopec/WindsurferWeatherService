@@ -2,17 +2,24 @@ package com.kontociepok.windsurferweatherservice.locations.controller;
 
 import com.kontociepok.windsurferweatherservice.locations.model.LocationCoordinates;
 import com.kontociepok.windsurferweatherservice.locations.repository.LocationCoordinatesRepo;
+import com.kontociepok.windsurferweatherservice.locations.service.LocationService;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 public class LocationControllerIntegrationTest {
 
     @LocalServerPort
@@ -24,15 +31,15 @@ public class LocationControllerIntegrationTest {
     @Autowired
     private LocationCoordinatesRepo locationCoordinatesRepo;
 
+    @Autowired
+    private LocationService locationService;
+
 
     @Test
     void shouldReturnAllCoordinates(){
 
             // given
-            locationCoordinatesRepo.deleteAll();
-            locationCoordinatesRepo.save(new LocationCoordinates(11.22, 33.44));
-            locationCoordinatesRepo.save(new LocationCoordinates(55.66,77.88));
-            var expected = new LocationCoordinatesResponse(7L, 55.66,77.88);
+            var expected = new LocationCoordinatesResponse(1L, 54.7028, 18.6707);
 
             // when
             var result = restTemplate.getForEntity("http://localhost:" + port + "/coordinates",
@@ -47,8 +54,7 @@ public class LocationControllerIntegrationTest {
     @Test
     void shouldAddCoordinates(){
         //given
-        locationCoordinatesRepo.deleteAll();
-        var expected = new LocationCoordinatesResponse(10L,11.11,22.22);
+        var expected = new LocationCoordinatesResponse(6L,11.11,22.22);
 
         //when
         var result = restTemplate.postForEntity("http://localhost:" + port + "/coordinates?lat=11.11&lon=22.22",
@@ -61,13 +67,9 @@ public class LocationControllerIntegrationTest {
     }
     @Test
     void shouldDeleteCoordinatesById(){
-        //given
-        locationCoordinatesRepo.deleteAll();
-        locationCoordinatesRepo.save(new LocationCoordinates(11.22, 33.44));
-        locationCoordinatesRepo.save(new LocationCoordinates(55.66,77.88));
 
         //when
-        restTemplate.delete("http://localhost:" + port + "/coordinates?coordinatesId=11",
+        restTemplate.delete("http://localhost:" + port + "/coordinates?coordinatesId=6",
                 LocationCoordinatesResponse.class);
 
         //then
@@ -75,7 +77,7 @@ public class LocationControllerIntegrationTest {
                 LocationCoordinatesResponse[].class);
         assertThat(result.getStatusCodeValue() == 200);
         assertThat(result.hasBody()).isTrue();
-        assertThat(result.getBody()).hasSize(1);
+        assertThat(result.getBody()).hasSize(5);
 
     }
 
@@ -83,8 +85,8 @@ public class LocationControllerIntegrationTest {
     void shouldReturnListBestPlaceWhenExists(){
         //given
         locationCoordinatesRepo.deleteAll();
-        locationCoordinatesRepo.save(new LocationCoordinates(54.7028, 18.6707));
         locationCoordinatesRepo.save(new LocationCoordinates(13.0968, -59.6144));
+
         String dateToday = LocalDate.now().toString();
 
         //when
@@ -94,7 +96,21 @@ public class LocationControllerIntegrationTest {
         //then
         assertThat(result.getStatusCodeValue() == 200);
         assertThat(result.hasBody()).isTrue();
+        assertThat(result.getBody()).hasSize(1);
 
     }
+    @Test
+    void shouldReturnExeptionWhenBadFormatDate(){
+        //given
+        String dateToday = "2002.2.2";
+
+        //when
+        Exception ex = assertThrows(Exception.class, () -> locationService.checkDate(dateToday));
+
+        //then
+        MatcherAssert.assertThat(ex.getMessage(), is("Text '2002.2.2' could not be parsed at index 4"));
+
+    }
+
 
 }
