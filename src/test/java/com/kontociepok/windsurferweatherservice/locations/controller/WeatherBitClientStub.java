@@ -1,11 +1,17 @@
 package com.kontociepok.windsurferweatherservice.locations.controller;
 
+import com.kontociepok.windsurferweatherservice.locations.controller.LocationDetails;
+import com.kontociepok.windsurferweatherservice.locations.controller.LocationDto;
 import com.kontociepok.windsurferweatherservice.locations.service.Weather;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
-@Service
+@Component
+@Profile("test")
 public class WeatherBitClientStub implements Weather {
 
     @Override

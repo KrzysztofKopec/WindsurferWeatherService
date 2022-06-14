@@ -4,11 +4,14 @@ import com.kontociepok.windsurferweatherservice.locations.controller.LocationDto
 import com.kontociepok.windsurferweatherservice.locations.exception.WeatherServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Supplier;
 
-@Service
+@Component
+@Profile("prod")
 class WeatherBitClient implements Weather {
 
     @Autowired

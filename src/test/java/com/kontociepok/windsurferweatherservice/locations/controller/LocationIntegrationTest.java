@@ -1,26 +1,23 @@
 package com.kontociepok.windsurferweatherservice.locations.controller;
 
+import com.kontociepok.windsurferweatherservice.locations.exception.CustomBadFormatDate;
+import com.kontociepok.windsurferweatherservice.locations.exception.CustomParameterConstraintException;
 import com.kontociepok.windsurferweatherservice.locations.model.LocationCoordinates;
 import com.kontociepok.windsurferweatherservice.locations.repository.LocationCoordinatesRepo;
 import com.kontociepok.windsurferweatherservice.locations.service.LocationService;
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-public class LocationControllerIntegrationTest {
+public class LocationIntegrationTest {
 
     @LocalServerPort
     private int port;
@@ -69,7 +66,7 @@ public class LocationControllerIntegrationTest {
     void shouldDeleteCoordinatesById(){
 
         //when
-        restTemplate.delete("http://localhost:" + port + "/coordinates?coordinatesId=6",
+        restTemplate.delete("http://localhost:" + port + "/coordinates?coordinatesId=5",
                 LocationCoordinatesResponse.class);
 
         //then
@@ -77,7 +74,7 @@ public class LocationControllerIntegrationTest {
                 LocationCoordinatesResponse[].class);
         assertThat(result.getStatusCodeValue() == 200);
         assertThat(result.hasBody()).isTrue();
-        assertThat(result.getBody()).hasSize(5);
+        assertThat(result.getBody()).hasSize(4);
 
     }
 
@@ -100,16 +97,27 @@ public class LocationControllerIntegrationTest {
 
     }
     @Test
-    void shouldReturnExeptionWhenBadFormatDate(){
-        //given
-        String dateToday = "2002.2.2";
-
+    void shouldReturnExceptionWhenWriteBadFormatDate() {
         //when
-        Exception ex = assertThrows(Exception.class, () -> locationService.checkDate(dateToday));
+        var result = restTemplate.getForEntity("http://localhost:" + port + "/date?date=2022-06.10",
+                CustomBadFormatDate.class);
 
         //then
-        MatcherAssert.assertThat(ex.getMessage(), is("Text '2002.2.2' could not be parsed at index 4"));
+        assertThat(result.getStatusCodeValue() == 400);
+        assertThat(result.hasBody()).isTrue();
+        assertThat(result.getBody().getMessage()).isEqualTo("Bad format date: Text '2022-06.10' could not be parsed at index 7");
+    }
 
+    @Test
+    void shouldReturnExceptionWhenWriteOldOrFutureDate(){
+        //when
+        var result = restTemplate.getForEntity("http://localhost:" + port + "/date?date=2021-06-10",
+                CustomParameterConstraintException.class);
+
+        //then
+        assertThat(result.getStatusCodeValue() == 500);
+        assertThat(result.hasBody()).isTrue();
+        assertThat(result.getBody().getMessage()).isEqualTo("Date is too old or too far away");
     }
 
 

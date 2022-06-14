@@ -1,10 +1,7 @@
 package com.kontociepok.windsurferweatherservice.locations.controller;
 
-import com.kontociepok.windsurferweatherservice.locations.model.LocationCoordinates;
 import com.kontociepok.windsurferweatherservice.locations.service.LocationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +17,8 @@ public class LocationController {
     }
 
     @GetMapping("/date")
-    ResponseEntity<List<LocationResponse>> listBestPlace(@RequestParam String date){
-        return new ResponseEntity<>(locationService.allBestPlace(date), HttpStatus.OK);
+    List<LocationResponse> listBestPlace(@RequestParam String date){
+        return locationService.allBestPlace(date);
     }
 
     @PostMapping("/coordinates")

@@ -1,76 +1,66 @@
 package com.kontociepok.windsurferweatherservice.locations.service;
 
 import com.kontociepok.windsurferweatherservice.locations.controller.*;
-import com.kontociepok.windsurferweatherservice.locations.exception.WeatherServiceException;
+import com.kontociepok.windsurferweatherservice.locations.exception.CustomBadFormatDate;
+import com.kontociepok.windsurferweatherservice.locations.exception.CustomParameterConstraintException;
 import com.kontociepok.windsurferweatherservice.locations.model.LocationCoordinates;
 import com.kontociepok.windsurferweatherservice.locations.repository.LocationCoordinatesRepo;
 import org.springframework.stereotype.Service;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-
 public class LocationService {
-
 
     private final LocationCoordinatesRepo locationCoordinatesRepo;
     private final Weather weather;
+    private final BestWeatherSelector bestWeatherSelector;
 
-    public LocationService(LocationCoordinatesRepo locationCoordinatesRepo, Weather weather) {
+    public LocationService(LocationCoordinatesRepo locationCoordinatesRepo, Weather weather, BestWeatherSelector bestWeatherSelector) {
         this.locationCoordinatesRepo = locationCoordinatesRepo;
         this.weather = weather;
-
+        this.bestWeatherSelector = bestWeatherSelector;
     }
 
 
-    public int checkDate(String date){
+    public int getDaysBetweenDateAndNow(String date){
         LocalDate dateToday = LocalDate.now();
         try {
             LocalDate dateSearch = LocalDate.parse(date);
             return (int) ChronoUnit.DAYS.between(dateToday, dateSearch);
-        }catch (Exception e){
-            throw new WeatherServiceException(String.format("BAD DATE FORMAT  %S",e));
+        }catch (DateTimeException e){
+            throw new CustomBadFormatDate("Bad format date: "+ e.getMessage());
         }
-//        if(dateToday.isEqual(dateSearch) || dateToday.isBefore(dateSearch)){
-//            return (int)ChronoUnit.DAYS.between(dateToday, dateSearch);
-//        }
-//        return -1;
     }
 
     public List<LocationResponse> allBestPlace(String date){
-        if(checkDate(date) < 0 || checkDate(date) > 15) return null;
-        return checkBestPlace(checkDate(date))
-                .stream()
-                .sorted(Comparator.comparing(LocationResponse::getTotalScore).reversed())
-                .collect(Collectors.toList());
+        int days = getDaysBetweenDateAndNow(date);
+
+        if(days < 0 || days > 15) throw new CustomParameterConstraintException("Date is too old or too far away");
+
+        List<LocationDto> locations = getWeathers();
+
+        return bestWeatherSelector.selectBestWeather(locations, days);
     }
 
-    public List<LocationResponse> checkBestPlace(int days){
+    public List<LocationDto> getWeathers(){
+        List<LocationDto> locations = new ArrayList<>();
         List<LocationCoordinates> locationCoordinates = locationCoordinatesRepo.findAll();
         List<LocationResponse> locationsResponse = new ArrayList<>();
-        LocationDetails locationDetails;
+
         String coordinates;
         for(LocationCoordinates x: locationCoordinates){
             coordinates = "lat=" +x.getLat()+"&lon="+x.getLon();
 
             LocationDto location = weather.getWeather(coordinates);
-            locationDetails = location.getData()[days];
-            if((locationDetails.getWind_spd()<5 || locationDetails.getWind_spd()>18) ||
-                    (locationDetails.getTemp()<5 || locationDetails.getTemp()>35))continue;
-            locationsResponse.add(convertToLocationResponse(location, days));
-
+            locations.add(location);
         }
-        return locationsResponse;
-    }
-
-    private LocationResponse convertToLocationResponse(LocationDto locationDto, int days){
-        return new LocationResponse(locationDto.getData()[days].getDatetime(),locationDto.getCity_name(),
-                locationDto.getData()[days].getTemp(),locationDto.getData()[days].getWind_spd());
+        return locations;
     }
 
     private LocationCoordinatesResponse convertToLocationCoordinatesResponse(LocationCoordinates locationCoordinates){
