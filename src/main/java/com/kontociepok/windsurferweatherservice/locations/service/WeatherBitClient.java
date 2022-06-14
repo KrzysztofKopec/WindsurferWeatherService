@@ -4,6 +4,7 @@ import com.kontociepok.windsurferweatherservice.locations.controller.LocationDto
 import com.kontociepok.windsurferweatherservice.locations.exception.WeatherServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -17,12 +18,18 @@ class WeatherBitClient implements Weather {
     @Autowired
     private CircuitBreaker countCircuitBreaker;
 
+    @Value("${firstStringUrl}")
+    private String firstStringUrl;
+
+    @Value("${secondStringUrl}")
+    private String secondStringUrl;
+
     @Override
     public LocationDto getWeather(String coordinates) {
 
         try {
 
-            String url = "https://api.weatherbit.io/v2.0/forecast/daily?" + coordinates + "&key=160bf06dc0924e2e9861636c78213988";
+            String url = firstStringUrl + coordinates + secondStringUrl;
             Supplier<LocationDto> locationDtoSupplier = countCircuitBreaker.decorateSupplier(() -> new RestTemplateConnection(url).response());
             return locationDtoSupplier.get();
 
