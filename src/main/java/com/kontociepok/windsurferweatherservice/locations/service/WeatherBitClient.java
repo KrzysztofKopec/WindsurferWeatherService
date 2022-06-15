@@ -27,16 +27,9 @@ class WeatherBitClient implements Weather {
     @Override
     public LocationDto getWeather(String coordinates) {
 
-        try {
-
             String url = firstStringUrl + coordinates + secondStringUrl;
             Supplier<LocationDto> locationDtoSupplier = countCircuitBreaker.decorateSupplier(() -> new RestTemplateConnection(url).response());
             return locationDtoSupplier.get();
 
-        } catch (Exception e) {
-
-            throw new WeatherServiceException(String.format("Something went wrong! %s", e));
-
-        }
     }
 }

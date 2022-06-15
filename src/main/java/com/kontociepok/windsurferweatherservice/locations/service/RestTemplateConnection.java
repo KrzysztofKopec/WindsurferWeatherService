@@ -18,7 +18,7 @@ public class RestTemplateConnection {
          try {
              result = restTemplate.getForEntity(url, LocationDto.class);
          } catch (Exception e) {
-             throw new WeatherServiceException(e);
+             throw new WeatherServiceException("Something went wrong! Failed connection to WeatherBit");
              }
          }
 

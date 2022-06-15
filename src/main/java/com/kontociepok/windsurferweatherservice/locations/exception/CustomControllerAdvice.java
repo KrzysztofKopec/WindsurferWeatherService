@@ -19,4 +19,9 @@ public class CustomControllerAdvice {
         HttpStatus status = HttpStatus.BAD_REQUEST;
         return new ResponseEntity<>(new ErrorResponse(status, e.getMessage()), status);
     }
+    @ExceptionHandler(WeatherServiceException.class)
+    public ResponseEntity<ErrorResponse> handlerCustomConnectionExceptions(Exception e) {
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        return new ResponseEntity<>(new ErrorResponse(status, e.getMessage()), status);
+    }
 }
